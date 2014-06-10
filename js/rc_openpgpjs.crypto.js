@@ -21,8 +21,10 @@
  * +-------------------------------------------------------------------------+
  * */
 
-openpgp.init();
 // openpgp.config.debug = true
+//
+
+var keyring = new openpgp.Keyring();
 
 /**
  * Encrypt (and sign) a message
@@ -178,19 +180,19 @@ function verify(msg, pubkeys) {
 
 
 function parseMsg(msg) {
-	return openpgp.read_message(msg);
+	return openpgp.message.readArmored(msg);
 }
 
 function hasPrivateKey() {
-	return openpgp.keyring.hasPrivateKey();
+	return keyring.hasPrivateKey();
 }
 
 function getPrivkeyCount() {
-	return openpgp.keyring.privateKeys.length;
+	return keyring.privateKeys.length;
 }
 
 function getPubkeyCount() {
-	return openpgp.keyring.publicKeys.length;
+	return keyring.publicKeys.length;
 }
 
 function getFingerprint(i, private, niceformat) {
@@ -203,9 +205,9 @@ function getFingerprint(i, private, niceformat) {
 	}
 
 	if(private == false) {
-		fingerprint = util.hexstrdump(openpgp.keyring.publicKeys[i].obj.getFingerprint()).toUpperCase();
+		fingerprint = util.hexstrdump(keyring.publicKeys[i].obj.getFingerprint()).toUpperCase();
 	} else {
-		fingerprint = util.hexstrdump(openpgp.keyring.privateKeys[i].obj.getFingerprint()).toUpperCase();
+		fingerprint = util.hexstrdump(keyring.privateKeys[i].obj.getFingerprint()).toUpperCase();
 	}
 
 	if(niceformat) {
@@ -223,9 +225,9 @@ function getKeyID(i, private) {
 	}
 
 	if(private == false) {
-		key_id = "0x" + util.hexstrdump(openpgp.keyring.publicKeys[i].obj.getKeyId()).toUpperCase().substring(8);
+		key_id = "0x" + util.hexstrdump(keyring.publicKeys[i].obj.getKeyId()).toUpperCase().substring(8);
 	} else {
-		key_id = "0x" + util.hexstrdump(openpgp.keyring.privateKeys[i].obj.getKeyId()).toUpperCase().substring(8);
+		key_id = "0x" + util.hexstrdump(keyring.privateKeys[i].obj.getKeyId()).toUpperCase().substring(8);
 	}
 
 	return key_id;
@@ -237,16 +239,16 @@ function getPerson(i, j, private) {
 	}
 
 	if(private == false) {
-		person = openpgp.keyring.publicKeys[i].obj.userIds[j].text;
+		person = keyring.publicKeys[i].obj.userIds[j].text;
 	} else {
-		person = openpgp.keyring.privateKeys[i].obj.userIds[j].text;
+		person = keyring.privateKeys[i].obj.userIds[j].text;
 	}
 
 	return person;
 }
 
 function getPubkeyForAddress(address) {
-	var pubkey = openpgp.keyring.getPublicKeyForAddress(address);
+	var pubkey = keyring.getPublicKeyForAddress(address);
 	return pubkey;
 }
 
@@ -257,8 +259,8 @@ function getFingerprintForSender(sender) {
 }
 
 function getPrivkeyArmored(id) {
-	var keyid = openpgp.keyring.privateKeys[id].obj.getKeyId();
-	var privkey_armored = openpgp.keyring.getPrivateKeyForKeyId(keyid)[0].key.armored;
+	var keyid = keyring.privateKeys[id].obj.getKeyId();
+	var privkey_armored = keyring.getPrivateKeyForKeyId(keyid)[0].key.armored;
 	return privkey_armored;
 }
 
@@ -274,20 +276,20 @@ function getPrivkey(armored) {
 }
 
 function decryptSecretMPIs(i, p) {
-	return openpgp.keyring.privateKeys[i].obj.decryptSecretMPIs(p);
+	return keyring.privateKeys[i].obj.decryptSecretMPIs(p);
 }
 
 function decryptSecretMPIsForId(id, passphrase) {
-	var keyid = openpgp.keyring.privateKeys[id].obj.getKeyId();
-	var privkey_armored = openpgp.keyring.getPrivateKeyForKeyId(keyid)[0].key.armored;
+	var keyid = keyring.privateKeys[id].obj.getKeyId();
+	var privkey_armored = keyring.getPrivateKeyForKeyId(keyid)[0].key.armored;
 	var privkey = getPrivkey(privkey_armored);
 	return privkey[0].decryptSecretMPIs(passphrase);
 }
 
 function importPubkey(key) {
 	try {
-		openpgp.keyring.importPublicKey(key);
-		openpgp.keyring.store();
+		keyring.importPublicKey(key);
+		keyring.store();
 	} catch(e) {
 		console.log(e);
 		return false;
@@ -297,8 +299,8 @@ function importPubkey(key) {
 
 function importPrivkey(key, passphrase) {
 	try {
-		openpgp.keyring.importPrivateKey(key, passphrase);
-		openpgp.keyring.store();
+		keyring.importPrivateKey(key, passphrase);
+		keyring.store();
 	} catch(e) {
 		return false;
 	}
@@ -320,14 +322,14 @@ function removeKey(i, private) {
 	}
 
 	if(private) {
-		return openpgp.keyring.removePrivateKey(i);
+		return keyring.removePrivateKey(i);
 	}
 
-	return openpgp.keyring.removePublicKey(i);
+	return keyring.removePublicKey(i);
 }
 
 function verifyBasicSignatures(i) {
-	return (openpgp.keyring.publicKeys[i].obj.verifyBasicSignatures() ? true : false);
+	return (keyring.publicKeys[i].obj.verifyBasicSignatures() ? true : false);
 }
 
 /**
@@ -343,9 +345,9 @@ function getAlgorithmString(i, private) {
 	}
 
 	if(private) {
-		key = openpgp.keyring.privateKeys[i].obj;
+		key = keyring.privateKeys[i].obj;
 	} else {
-		key = openpgp.keyring.publicKeys[i].obj;
+		key = keyring.publicKeys[i].obj;
 	}
 
 	if(typeof(key.publicKeyPacket) !== "undefined") {
@@ -367,9 +369,9 @@ function exportArmored(i, private) {
 	}
 
 	if(private) {
-		return openpgp.keyring.privateKeys[i].armored;
+		return keyring.privateKeys[i].armored;
 	} else {
-		return openpgp.keyring.publicKeys[i].armored;
+		return keyring.publicKeys[i].armored;
 	}
 }
 
@@ -379,8 +381,8 @@ function getKeyUserids(i, private) {
 	}
 
 	if(private) {
-		return openpgp.keyring.privateKeys[i].obj.userIds;
+		return keyring.privateKeys[i].obj.userIds;
 	} else {
-		return openpgp.keyring.publicKeys[i].obj.userIds;
+		return keyring.publicKeys[i].obj.userIds;
 	}
 }

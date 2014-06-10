@@ -117,12 +117,12 @@ if(window.rcmail) {
       return;
     }
 
-    // msg[0].type: 2 == signed only
-    // msg[0].type: 3 == encrypted only
+    // msg.type: 2 == signed only
+    // msg.type: 3 == encrypted only
 
     showKeyInfo(msg);
 
-    if(msg[0].type === 2) {
+    if(msg.type === 2) {
       // rcmail.env.sender contains "Jon Doe <jd@example.com>" or just "jd@example.com";
       // We try to extract the email address (according to RFC 5322) in either case
       var senderAddress = rcmail.env.sender.match(/[A-Za-z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+/);
